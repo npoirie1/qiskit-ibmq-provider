@@ -14,6 +14,8 @@
 
 """Client for accessing an individual IBM Quantum Experience account."""
 
+import sys
+
 import asyncio
 import logging
 import time

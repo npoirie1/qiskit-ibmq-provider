@@ -480,6 +480,10 @@ class IBMQJob(SimpleNamespace, BaseJob):
 
         with api_to_job_error():
             api_response = self._api.job_status(self.job_id())
+
+            if api_response['status'] is 'ERROR_RUNNING_JOB':
+                return JobStatus.ERROR
+
             self._status, self._queue_info = self._get_status_position(
                 api_response['status'], api_response.get('info_queue', None))
 

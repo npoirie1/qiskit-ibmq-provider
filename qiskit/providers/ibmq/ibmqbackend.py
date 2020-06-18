@@ -14,6 +14,8 @@
 
 """Module for interfacing with an IBM Quantum Experience Backend."""
 
+import sys
+
 import logging
 import warnings
 
@@ -207,18 +209,20 @@ class IBMQBackend(BaseBackend):
             IBMQBackendJobLimitError: If the job could not be submitted because
                 the job limit has been reached.
         """
-        try:
-            qobj_dict = qobj.to_dict()
-            submit_info = self._api.job_submit(
-                backend_name=self.name(),
-                qobj_dict=qobj_dict,
-                job_name=job_name,
-                job_share_level=job_share_level,
-                job_tags=job_tags)
-        except ApiError as ex:
-            if 'Error code: 3458' in str(ex):
-                raise IBMQBackendJobLimitError('Error submitting job: {}'.format(str(ex))) from ex
-            raise IBMQBackendApiError('Error submitting job: {}'.format(str(ex))) from ex
+        job_submission_succeeded = False
+        while not job_submission_succeeded:
+            try:
+                qobj_dict = qobj.to_dict()
+                submit_info = self._api.job_submit(
+                    backend_name=self.name(),
+                    qobj_dict=qobj_dict,
+                    job_name=job_name,
+                    job_share_level=job_share_level,
+                    job_tags=job_tags)
+                job_submission_succeeded = True
+            except ApiError as ex:
+                print('Error submitting job: {}'.format(str(ex)))
+                sys.stdout.flush()
 
         # Error in the job after submission:
         # Transition to the `ERROR` final state.

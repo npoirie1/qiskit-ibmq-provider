@@ -103,3 +103,6 @@ Qconfig.py
 .DS_Store
 
 /docs/stubs/
+
+# PyCharm specific ignores
+.idea/

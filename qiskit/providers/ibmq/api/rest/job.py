@@ -14,6 +14,8 @@
 
 """Job REST adapter."""
 
+import sys
+
 import logging
 import json
 from json.decoder import JSONDecodeError
@@ -156,13 +158,18 @@ class Job(RestAdapterBase):
             ApiIBMQProtocolError: If an unexpected result is received from the server.
         """
         url = self.get_url('status')
-        raw_response = self.session.get(url)
+        try:
+            raw_response = self.session.get(url, timeout=5.0)
+        except:
+            return {'status': 'ERROR_RUNNING_JOB'}
+
         try:
             api_response = raw_response.json()
         except JSONDecodeError as err:
             raise ApiIBMQProtocolError(
                 'Unrecognized return value received from the server: {!r}. This could be caused'
                 ' by too many requests.'.format(raw_response.content)) from err
+
         return map_job_status_response(api_response)
 
     def upload_url(self) -> Dict[str, Any]:
@@ -186,7 +193,7 @@ class Job(RestAdapterBase):
         """
         data = json.dumps(qobj_dict, cls=json_encoder.IQXJsonEconder)
         logger.debug('Uploading to object storage.')
-        response = self.session.put(url, data=data, bare=True, timeout=600)
+        response = self.session.put(url, data=data, bare=True, timeout=30)
         return response.text
 
     def get_object_storage(self, url: str) -> Dict[str, Any]:
